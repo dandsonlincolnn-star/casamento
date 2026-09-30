@@ -92,6 +92,8 @@ textarea{min-height:70px;resize:vertical}
 .pill.ok{background:var(--ok-soft);color:var(--ok)}
 .pill.no{background:var(--no-soft);color:var(--no)}
 .pill.wait{background:var(--wait-soft);color:var(--wait)}
+.notice{background:var(--wait-soft);color:var(--wait);border-radius:12px;padding:12px 14px;font-size:14px;margin-bottom:12px}
+.fam{font-size:13px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin:14px 2px 2px}
 .empty{text-align:center;padding:36px 16px;color:var(--muted);border:1px dashed var(--line);border-radius:14px}
 .empty p{margin:0 0 14px}
 
@@ -143,9 +145,12 @@ dialog::backdrop{background:rgba(20,26,22,.45)}
 
   <section id="tab-convidados" hidden>
     <div class="toolbar">
-      <input type="search" id="gSearch" placeholder="Buscar convidado">
+      <input type="search" id="gSearch" placeholder="Buscar por nome ou família">
       <button class="btn" id="addGuest">Adicionar convidado</button>
     </div>
+    <div class="field" style="margin-bottom:12px"><select id="fFilter" aria-label="Filtrar por família"></select></div>
+    <div class="notice" id="legacyNote" hidden></div>
+    <div class="chips" id="rChips"></div>
     <div class="chips" id="gChips"></div>
     <div class="list" id="gList"></div>
   </section>
@@ -183,9 +188,11 @@ const API = "https://sheets.googleapis.com/v4/spreadsheets";
 const GUEST_STATUS = [["Pendente","wait"],["Confirmado","ok"],["Não vai","no"]];
 const QUOTE_STATUS = [["Em análise","wait"],["Aprovado","ok"],["Não aprovado","no"]];
 const SIDES = ["Noiva","Noivo","Ambos"];
+const ROLES = ["Convidado","Padrinho"];
+const AGES = ["Adulto","Criança"];
 const CATEGORIES = ["Local","Buffet","Bebidas","Bolo e doces","Decoração","Flores","Fotografia","Filmagem","Música/DJ","Vestido","Traje do noivo","Beleza","Convites","Cerimonial","Lembrancinhas","Outros"];
 const TABLES = {
-  guests:{sheet:"Convidados", cols:["id","nome","lado","adultos","criancas","presenca","telefone","obs","atualizado","excluido"], key:"nome"},
+  guests:{sheet:"Convidados", cols:["id","nome","lado","presenca","telefone","obs","atualizado","excluido","papel","familia","faixa"], key:"nome"},
   quotes:{sheet:"Orçamentos", cols:["id","fornecedor","categoria","valor","pago","situacao","contato","obs","atualizado","excluido"], key:"fornecedor"}
 };
 const CONFIG_KEYS = ["noiva","noivo","data","teto","atualizado"];
@@ -247,6 +254,10 @@ function colLetter(n){ let s=""; while(n>0){ const m=(n-1)%26; s=String.fromChar
 function serialToISO(n){ return new Date(Date.UTC(1899,11,30)+Math.round(n)*86400000).toISOString().slice(0,10); }
 
 function normGuestStatus(v){ const s=String(v||"").toLowerCase(); if(s.startsWith("confirm")) return "Confirmado"; if(s.includes("não")||s.includes("nao")||s.includes("recus")) return "Não vai"; return "Pendente"; }
+function normRole(v){ const s=String(v||"").toLowerCase(); if(s.startsWith("padrinho")||s.startsWith("madrinha")) return "Padrinho"; return "Convidado"; }
+function normAge(v, o){ const s=String(v||"").toLowerCase(); if(s.startsWith("crian")) return "Criança"; if(s.startsWith("adult")) return "Adulto";
+  return (num(o&&o.adultos)===0 && num(o&&o.criancas)>0) ? "Criança" : "Adulto"; }
+const legacyCount = x => num(x.adultos)+num(x.criancas);
 function normQuoteStatus(v){ const s=String(v||"").toLowerCase(); if(s.includes("não")||s.includes("nao")||s.includes("reprov")) return "Não aprovado"; if(s.startsWith("aprov")) return "Aprovado"; return "Em análise"; }
 function normalize(t,o){
   const r = {};
@@ -254,7 +265,7 @@ function normalize(t,o){
   Object.keys(o).forEach(k => { if(!(k in r)) r[k]=o[k]; });
   r.id=String(r.id); r.atualizado=num(r.atualizado);
   r.excluido = String(r.excluido).toLowerCase()==="sim" ? "sim" : "";
-  if(t==="guests"){ r.nome=String(r.nome); r.adultos=Math.max(0,Math.round(num(r.adultos))); r.criancas=Math.max(0,Math.round(num(r.criancas))); r.presenca=normGuestStatus(r.presenca); r.lado=String(r.lado||""); r.telefone=String(r.telefone); }
+  if(t==="guests"){ r.nome=String(r.nome); r.familia=String(r.familia||"").trim(); r.faixa=normAge(r.faixa, r); r.presenca=normGuestStatus(r.presenca); r.papel=normRole(r.papel); r.lado=String(r.lado||""); r.telefone=String(r.telefone); }
   else { r.fornecedor=String(r.fornecedor); r.valor=num(r.valor); r.pago=num(r.pago); r.situacao=normQuoteStatus(r.situacao); r.categoria=String(r.categoria||"Outros"); }
   return r;
 }
@@ -445,10 +456,12 @@ function renderHeader(){
 
 function renderSummary(){
   const G=guests(), Q=quotes();
-  const ppl = x => (Number(x.adultos)||0)+(Number(x.criancas)||0);
-  const total=G.reduce((s,x)=>s+ppl(x),0);
-  const conf=G.filter(x=>x.presenca==="Confirmado").reduce((s,x)=>s+ppl(x),0);
-  const pend=G.filter(x=>x.presenca==="Pendente").reduce((s,x)=>s+ppl(x),0);
+  const total=G.length, kids=G.filter(x=>x.faixa==="Criança").length, adults=total-kids;
+  const fams=new Set(G.map(x=>x.familia.toLowerCase()).filter(Boolean)).size;
+  const conf=G.filter(x=>x.presenca==="Confirmado").length;
+  const pend=G.filter(x=>x.presenca==="Pendente").length;
+  const pad=G.filter(x=>x.papel==="Padrinho");
+  const padOk=pad.filter(x=>x.presenca==="Confirmado").length;
   const ap=Q.filter(q=>q.situacao==="Aprovado");
   const spent=ap.reduce((s,q)=>s+num(q.valor),0), paid=ap.reduce((s,q)=>s+num(q.pago),0);
   const analysing=Q.filter(q=>q.situacao==="Em análise").length;
@@ -457,8 +470,9 @@ function renderSummary(){
   const cats=Object.entries(byCat).sort((a,b)=>b[1]-a[1]);
   $("#tab-resumo").innerHTML = `
     <div class="stats">
-      <div class="stat"><h3>Convidados</h3><div class="big">${total}</div><div class="sub">${G.length} convite${G.length===1?"":"s"}</div></div>
+      <div class="stat"><h3>Convidados</h3><div class="big">${total}</div><div class="sub">${adults} adulto${adults===1?"":"s"}, ${kids} criança${kids===1?"":"s"}</div><div class="sub">${fams} família${fams===1?"":"s"}</div></div>
       <div class="stat"><h3>Confirmados</h3><div class="big">${conf}</div><div class="sub">${pend} aguardando resposta</div></div>
+      <div class="stat wide"><h3>Padrinhos</h3><div class="big">${pad.length}</div><div class="sub">${padOk} confirmado${padOk===1?"":"s"}</div></div>
       <div class="stat wide">
         <h3>Gastos aprovados</h3>
         <div class="big">${brl(spent)}</div>
@@ -472,9 +486,9 @@ function renderSummary(){
     </div>`;
 }
 
-let gFilter="todos", qFilter="todos";
-function renderChips(el, list, current, onPick){
-  const opts=[["todos","Todos"], ...list.map(([l])=>[l,l])];
+let gFilter="todos", qFilter="todos", rFilter="todos", fFilter="todos";
+function renderChips(el, list, current, onPick, allLabel="Todos"){
+  const opts=[["todos",allLabel], ...list.map(([l])=>[l,l])];
   el.innerHTML = opts.map(([k,l])=>`<button class="chip" aria-pressed="${k===current}" data-k="${esc(k)}">${esc(l)}</button>`).join("");
   el.querySelectorAll("button").forEach(b=>b.onclick=()=>onPick(b.dataset.k));
 }
@@ -482,16 +496,27 @@ const pillCls = (list,v) => (list.find(x=>x[0]===v)||list[0])[1];
 
 function renderGuests(){
   renderChips($("#gChips"), GUEST_STATUS, gFilter, k=>{gFilter=k; renderGuests();});
+  renderChips($("#rChips"), ROLES.map(r=>[r]), rFilter, k=>{rFilter=k; renderGuests();}, "Todas as pessoas");
   const q=$("#gSearch").value.trim().toLowerCase(), all=guests();
-  const list=all.filter(x=>(gFilter==="todos"||x.presenca===gFilter) && (!q || x.nome.toLowerCase().includes(q) || String(x.obs).toLowerCase().includes(q)))
-    .sort((a,b)=>a.nome.localeCompare(b.nome,"pt-BR"));
+  const famNames=[...new Map(all.filter(x=>x.familia).map(x=>[x.familia.toLowerCase(), x.familia])).values()].sort((a,b)=>a.localeCompare(b,"pt-BR"));
+  if(fFilter!=="todos" && fFilter!=="__sem" && !famNames.some(f=>f.toLowerCase()===fFilter)) fFilter="todos";
+  $("#fFilter").innerHTML = `<option value="todos">Todas as famílias</option>` + famNames.map(f=>`<option value="${esc(f.toLowerCase())}" ${f.toLowerCase()===fFilter?"selected":""}>${esc(f)}</option>`).join("")
+    + (all.some(x=>!x.familia) ? `<option value="__sem" ${fFilter==="__sem"?"selected":""}>Sem família</option>` : "");
+  const legacy=all.filter(x=>legacyCount(x)>1);
+  const note=$("#legacyNote"); note.hidden=!legacy.length;
+  if(legacy.length) note.textContent = `${legacy.length} cadastro${legacy.length===1?"":"s"} antigo${legacy.length===1?"":"s"} representava${legacy.length===1?"":"m"} mais de uma pessoa (${legacy.map(x=>x.nome).slice(0,3).join(", ")}${legacy.length>3?"…":""}). Agora cada cadastro conta como 1 pessoa: cadastre as demais individualmente.`;
+  const list=all.filter(x=>(gFilter==="todos"||x.presenca===gFilter) && (rFilter==="todos"||(x.papel||"Convidado")===rFilter)
+      && (fFilter==="todos" || (fFilter==="__sem" ? !x.familia : x.familia.toLowerCase()===fFilter))
+      && (!q || x.nome.toLowerCase().includes(q) || x.familia.toLowerCase().includes(q) || String(x.obs).toLowerCase().includes(q)))
+    .sort((a,b)=>(a.familia||"~").localeCompare(b.familia||"~","pt-BR") || a.nome.localeCompare(b.nome,"pt-BR"));
   const el=$("#gList");
   if(!all.length){ el.innerHTML='<div class="empty"><p>Nenhum convidado ainda.</p><button class="btn" id="gFirst">Adicionar o primeiro</button></div>'; $("#gFirst").onclick=()=>openGuest(); return; }
   if(!list.length){ el.innerHTML='<div class="empty"><p>Nenhum convidado com esse filtro.</p></div>'; return; }
+  let lastFam=null;
   el.innerHTML = list.map(x=>{
-    const p=(Number(x.adultos)||0)+(Number(x.criancas)||0);
-    const meta=[x.lado, `${p} pessoa${p===1?"":"s"}`, x.telefone].filter(Boolean).join(", ");
-    return `<button class="row" data-id="${esc(x.id)}"><div class="main"><div class="title">${esc(x.nome)}</div><div class="meta">${esc(meta)}</div></div><span class="pill ${pillCls(GUEST_STATUS,x.presenca)}">${esc(x.presenca)}</span></button>`;
+    const meta=[x.papel && x.papel!=="Convidado" ? x.papel : "", x.faixa, x.lado, x.telefone].filter(Boolean).join(", ");
+    const fam=x.familia||"Sem família", head = fam.toLowerCase()!==lastFam ? `<div class="fam">${esc(fam)}</div>` : ""; lastFam=fam.toLowerCase();
+    return head + `<button class="row" data-id="${esc(x.id)}"><div class="main"><div class="title">${esc(x.nome)}</div><div class="meta">${esc(meta)}</div></div><span class="pill ${pillCls(GUEST_STATUS,x.presenca)}">${esc(x.presenca)}</span></button>`;
   }).join("");
   el.querySelectorAll(".row").forEach(r=>r.onclick=()=>openGuest(S.guests.find(g=>g.id===r.dataset.id)));
 }
@@ -517,15 +542,17 @@ const segVal = () => { const b=$('#sheet .seg button[aria-pressed="true"]'); ret
 const moneyField = v => v ? String(v).replace(".",",") : "";
 
 function openGuest(x){
-  const isNew=!x; x = x ? Object.assign({},x) : {id:newId(),nome:"",lado:"Noiva",adultos:1,criancas:0,presenca:"Pendente",telefone:"",obs:"",excluido:""};
+  const isNew=!x; x = x ? Object.assign({},x) : {id:newId(),nome:"",familia:"",faixa:"Adulto",papel:"Convidado",lado:"Noiva",presenca:"Pendente",telefone:"",obs:"",excluido:""};
   $("#sheet").innerHTML = `
     <h2>${isNew?"Novo convidado":"Convidado"}</h2>
-    <div class="field"><label for="f_nome">Nome ou família</label><input id="f_nome" value="${esc(x.nome)}"></div>
-    <div class="field"><label for="f_lado">Lado</label><select id="f_lado">${SIDES.map(s=>`<option ${s===x.lado?"selected":""}>${s}</option>`).join("")}</select></div>
+    <div class="field"><label for="f_nome">Nome</label><input id="f_nome" value="${esc(x.nome)}"></div>
+    <div class="field"><label for="f_fam">Família</label><input id="f_fam" list="famList" autocomplete="off" placeholder="Ex.: Família Souza" value="${esc(x.familia)}">
+      <datalist id="famList">${[...new Set(guests().map(g=>g.familia).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"pt-BR")).map(f=>`<option value="${esc(f)}"></option>`).join("")}</datalist></div>
     <div class="two">
-      <div class="field"><label for="f_ad">Adultos</label><input id="f_ad" type="number" min="0" inputmode="numeric" value="${esc(x.adultos)}"></div>
-      <div class="field"><label for="f_kd">Crianças</label><input id="f_kd" type="number" min="0" inputmode="numeric" value="${esc(x.criancas)}"></div>
+      <div class="field"><label for="f_papel">Categoria</label><select id="f_papel">${ROLES.map(s=>`<option ${s===(x.papel||"Convidado")?"selected":""}>${s}</option>`).join("")}</select></div>
+      <div class="field"><label for="f_lado">Lado</label><select id="f_lado">${SIDES.map(s=>`<option ${s===x.lado?"selected":""}>${s}</option>`).join("")}</select></div>
     </div>
+    <div class="field"><label for="f_faixa">Adulto ou criança</label><select id="f_faixa">${AGES.map(s=>`<option ${s===x.faixa?"selected":""}>${s}</option>`).join("")}</select></div>
     <div class="field"><label>Presença</label>${segHTML(GUEST_STATUS, x.presenca)}</div>
     <div class="field"><label for="f_tel">Telefone</label><input id="f_tel" type="tel" value="${esc(x.telefone)}"></div>
     <div class="field"><label for="f_obs">Observações</label><textarea id="f_obs">${esc(x.obs)}</textarea></div>
@@ -539,7 +566,9 @@ function openGuest(x){
   $("#cancel").onclick=()=>$("#dlg").close();
   $("#save").onclick=()=>{
     const nome=$("#f_nome").value.trim(); if(!nome){ $("#f_nome").focus(); toast("Digite o nome do convidado"); return; }
-    Object.assign(x,{nome, lado:$("#f_lado").value, adultos:Math.max(0,parseInt($("#f_ad").value)||0), criancas:Math.max(0,parseInt($("#f_kd").value)||0),
+    const famTyped=$("#f_fam").value.trim(), famMatch=guests().map(g=>g.familia).find(f=>f && f.toLowerCase()===famTyped.toLowerCase());
+    if("adultos" in x || "criancas" in x){ x.adultos=""; x.criancas=""; }  // cadastro antigo: passa a ser individual
+    Object.assign(x,{nome, familia:famMatch||famTyped, faixa:$("#f_faixa").value, papel:$("#f_papel").value, lado:$("#f_lado").value,
       presenca:segVal()||"Pendente", telefone:$("#f_tel").value.trim(), obs:$("#f_obs").value.trim()});
     change("guests", x); $("#dlg").close(); toast(isNew?"Convidado adicionado":"Convidado salvo");
   };
@@ -615,6 +644,7 @@ $("#openSettings").onclick = openSettings;
 $("#addGuest").onclick = () => openGuest();
 $("#addQuote").onclick = () => openQuote();
 $("#gSearch").addEventListener("input", renderGuests);
+$("#fFilter").addEventListener("change", e=>{ fFilter=e.target.value; renderGuests(); });
 $("#qSearch").addEventListener("input", renderQuotes);
 
 function renderAll(){ renderHeader(); renderSummary(); renderGuests(); renderQuotes(); }
