@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#3E5C4A">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Casamento">
+<title>Nosso casamento</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Figtree:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#FAFBF8; --surface:#FFFFFF; --ink:#1E2A23; --muted:#5E6B63; --line:#DCE3DC;
+  --sage:#3E5C4A; --sage-soft:#E4ECE5; --blush:#F1DCD6; --blush-ink:#8A4B3E;
+  --gold:#A4834F; --ok:#2F6B45; --ok-soft:#DDEEE2; --no:#9A3B3B; --no-soft:#F5E1E0;
+  --wait:#7A6420; --wait-soft:#F4EDD5;
+  --serif:"Cormorant Garamond", Georgia, "Times New Roman", serif;
+  --sans:"Figtree", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#141A16; --surface:#1C241F; --ink:#E8EDE9; --muted:#9AA79F; --line:#2E3A33;
+    --sage:#9CC2A8; --sage-soft:#243129; --blush:#3A2A27; --blush-ink:#E7B7AA;
+    --gold:#CDB07C; --ok:#8FD3A6; --ok-soft:#1F3427; --no:#EFA3A3; --no-soft:#3A2323;
+    --wait:#E4CC7E; --wait-soft:#332C17;
+  }
+}
+*,*::before,*::after{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:16px;line-height:1.5;-webkit-font-smoothing:antialiased;
+  padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+.wrap{max-width:760px;margin:0 auto;padding:0 18px 96px}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+button:disabled{opacity:.5;cursor:default}
+:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+
+header.hero{padding:30px 0 18px;text-align:center}
+.names{font-family:var(--serif);font-weight:500;font-size:clamp(40px,11vw,64px);line-height:1;letter-spacing:-.5px;margin:0}
+.names .amp{font-style:italic;color:var(--gold);padding:0 .12em}
+.date{margin-top:10px;color:var(--muted);font-size:15px}
+.count{display:inline-block;margin-top:14px;padding:6px 14px;border-radius:999px;background:var(--blush);color:var(--blush-ink);font-size:14px;font-weight:500}
+.links{display:flex;justify-content:center;gap:16px;margin-top:10px;flex-wrap:wrap}
+.link{background:none;border:0;color:var(--sage);font-size:14px;text-decoration:underline;text-underline-offset:3px;padding:4px}
+
+.sync{display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-bottom:16px;font-size:14px}
+.sync .dot{width:9px;height:9px;border-radius:50%;background:var(--muted);flex:none}
+.sync.ok .dot{background:var(--ok)} .sync.wait .dot{background:var(--wait)} .sync.no .dot{background:var(--no)}
+.sync .txt{flex:1;color:var(--muted)}
+.sync .btn{padding:7px 12px;font-size:14px}
+
+nav.tabs{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);display:flex;gap:4px;border-bottom:1px solid var(--line);margin:0 -18px 20px;padding:0 18px}
+nav.tabs button{flex:1;background:none;border:0;padding:14px 4px 12px;font-weight:500;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-1px}
+nav.tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--sage)}
+
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px}
+.stat h3{margin:0 0 8px;font-size:14px;font-weight:500;color:var(--muted)}
+.stat .big{font-family:var(--serif);font-size:34px;line-height:1;font-weight:600}
+.stat .sub{font-size:13px;color:var(--muted);margin-top:6px}
+.stat.wide{grid-column:1/-1}
+.bar{height:10px;background:var(--sage-soft);border-radius:999px;overflow:hidden;margin:12px 0 6px}
+.bar span{display:block;height:100%;background:var(--sage);border-radius:999px;transition:width .4s}
+.bar.over span{background:var(--no)}
+.cat-list{margin:12px 0 0;padding:0;list-style:none}
+.cat-list li{display:flex;justify-content:space-between;padding:8px 0;border-top:1px solid var(--line);font-size:15px}
+
+.toolbar{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+.toolbar input[type=search]{flex:1 1 180px;min-width:0}
+input,select,textarea{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 12px;width:100%}
+textarea{min-height:70px;resize:vertical}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+.chip{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:6px 12px;font-size:14px;color:var(--muted)}
+.chip[aria-pressed="true"]{background:var(--sage);border-color:var(--sage);color:var(--bg)}
+.btn{border:0;border-radius:10px;padding:11px 16px;font-weight:600;background:var(--sage);color:var(--bg);white-space:nowrap}
+.btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
+.btn.danger{background:transparent;color:var(--no);border:1px solid var(--no-soft)}
+.btn.block{width:100%;margin-top:8px}
+
+.list{display:flex;flex-direction:column;gap:8px}
+.row{display:flex;align-items:center;gap:12px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px;text-align:left;width:100%}
+.row .main{flex:1;min-width:0}
+.row .title{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.row .meta{font-size:13px;color:var(--muted)}
+.row .val{font-weight:600;white-space:nowrap}
+.pill{font-size:12px;font-weight:600;padding:4px 10px;border-radius:999px;white-space:nowrap}
+.pill.ok{background:var(--ok-soft);color:var(--ok)}
+.pill.no{background:var(--no-soft);color:var(--no)}
+.pill.wait{background:var(--wait-soft);color:var(--wait)}
+.empty{text-align:center;padding:36px 16px;color:var(--muted);border:1px dashed var(--line);border-radius:14px}
+.empty p{margin:0 0 14px}
+
+dialog{border:0;border-radius:18px 18px 0 0;padding:0;width:100%;max-width:560px;margin:auto auto 0;background:var(--surface);color:var(--ink);max-height:92vh}
+@media (min-width:640px){dialog{border-radius:18px;margin:auto}}
+dialog::backdrop{background:rgba(20,26,22,.45)}
+.sheet{padding:22px 20px calc(20px + env(safe-area-inset-bottom,0px))}
+.sheet h2{font-family:var(--serif);font-weight:600;font-size:28px;margin:0 0 16px}
+.sheet h3{font-size:15px;margin:22px 0 8px}
+.sheet p.help{font-size:14px;color:var(--muted);margin:0 0 10px}
+.field{margin-bottom:12px}
+.field label{display:block;font-size:14px;color:var(--muted);margin-bottom:4px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.seg{display:flex;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.seg button{flex:1;border:0;background:var(--surface);padding:10px 6px;font-size:14px;color:var(--muted)}
+.seg button+button{border-left:1px solid var(--line)}
+.seg button[aria-pressed="true"].ok{background:var(--ok-soft);color:var(--ok);font-weight:600}
+.seg button[aria-pressed="true"].no{background:var(--no-soft);color:var(--no);font-weight:600}
+.seg button[aria-pressed="true"].wait{background:var(--wait-soft);color:var(--wait);font-weight:600}
+.actions{display:flex;gap:8px;margin-top:18px}
+.actions .spacer{flex:1}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;font-size:14px;opacity:0;pointer-events:none;transition:opacity .2s;z-index:50}
+.toast.show{opacity:1}
+[hidden]{display:none!important}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="hero">
+    <h1 class="names" id="names">Noiva <span class="amp">&amp;</span> Noivo</h1>
+    <div class="date" id="dateLabel">Defina a data do casamento</div>
+    <div class="count" id="countdown" hidden></div>
+    <div class="links">
+      <button class="link" id="openSettings">Ajustes</button>
+      <button class="link" id="installBtn" hidden>Instalar app</button>
+    </div>
+  </header>
+
+  <div class="sync" id="syncBar"><span class="dot"></span><span class="txt" id="syncTxt">Carregando…</span><button class="btn" id="syncBtn" hidden></button></div>
+
+  <nav class="tabs" role="tablist">
+    <button role="tab" aria-selected="true" data-tab="resumo">Resumo</button>
+    <button role="tab" aria-selected="false" data-tab="convidados">Convidados</button>
+    <button role="tab" aria-selected="false" data-tab="orcamentos">Orçamentos</button>
+  </nav>
+
+  <section id="tab-resumo"></section>
+
+  <section id="tab-convidados" hidden>
+    <div class="toolbar">
+      <input type="search" id="gSearch" placeholder="Buscar convidado">
+      <button class="btn" id="addGuest">Adicionar convidado</button>
+    </div>
+    <div class="chips" id="gChips"></div>
+    <div class="list" id="gList"></div>
+  </section>
+
+  <section id="tab-orcamentos" hidden>
+    <div class="toolbar">
+      <input type="search" id="qSearch" placeholder="Buscar fornecedor ou categoria">
+      <button class="btn" id="addQuote">Adicionar orçamento</button>
+    </div>
+    <div class="chips" id="qChips"></div>
+    <div class="list" id="qList"></div>
+  </section>
+</div>
+
+<dialog id="dlg"><div class="sheet" id="sheet"></div></dialog>
+<div class="toast" id="toast" role="status"></div>
+
+<script src="config.js"></script>
+<script>
+(function(){
+"use strict";
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const brl = n => (Number(n)||0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
+const num = v => { if(typeof v==="number") return v; const s=String(v??"").trim(); if(!s) return 0; const n=parseFloat(s.includes(",")? s.replace(/\./g,"").replace(",",".") : s); return isFinite(n)?n:0; };
+const newId = () => (crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36)+Math.random().toString(36).slice(2,10)).slice(0,13);
+function toast(msg){ const t=$("#toast"); t.textContent=msg; t.classList.add("show"); clearTimeout(toast._t); toast._t=setTimeout(()=>t.classList.remove("show"),2400); }
+
+// ---------------- Configuração ----------------
+const CLIENT_ID = (window.APP_CONFIG && window.APP_CONFIG.GOOGLE_CLIENT_ID) || "";
+const configured = !!CLIENT_ID && !CLIENT_ID.includes("COLE_AQUI");
+const SCOPE = "https://www.googleapis.com/auth/spreadsheets";
+const API = "https://sheets.googleapis.com/v4/spreadsheets";
+
+const GUEST_STATUS = [["Pendente","wait"],["Confirmado","ok"],["Não vai","no"]];
+const QUOTE_STATUS = [["Em análise","wait"],["Aprovado","ok"],["Não aprovado","no"]];
+const SIDES = ["Noiva","Noivo","Ambos"];
+const CATEGORIES = ["Local","Buffet","Bebidas","Bolo e doces","Decoração","Flores","Fotografia","Filmagem","Música/DJ","Vestido","Traje do noivo","Beleza","Convites","Cerimonial","Lembrancinhas","Outros"];
+const TABLES = {
+  guests:{sheet:"Convidados", cols:["id","nome","lado","adultos","criancas","presenca","telefone","obs","atualizado","excluido"], key:"nome"},
+  quotes:{sheet:"Orçamentos", cols:["id","fornecedor","categoria","valor","pago","situacao","contato","obs","atualizado","excluido"], key:"fornecedor"}
+};
+const CONFIG_KEYS = ["noiva","noivo","data","teto","atualizado"];
+
+// ---------------- Dados guardados no aparelho ----------------
+const KEY = "casamento-dados-v1", TKEY = "casamento-token-v1";
+let S = {};
+try{ S = JSON.parse(localStorage.getItem(KEY)) || {}; }catch(e){}
+S = Object.assign({guests:[],quotes:[],settings:{noiva:"",noivo:"",data:"",teto:0,atualizado:0},pending:[],sheetId:"",lastSync:0,everLogged:false}, S);
+function persist(){ try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){ toast("Não foi possível salvar neste aparelho"); } }
+
+const urlSheet = new URLSearchParams(location.search).get("planilha");
+if(urlSheet){ if(urlSheet!==S.sheetId){ S.sheetId=urlSheet; S.lastSync=0; persist(); } history.replaceState(null,"",location.pathname); }
+
+// ---------------- Login Google ----------------
+let token=null, tokenExp=0, tokenClient=null, waiters=[];
+try{ const t=JSON.parse(localStorage.getItem(TKEY)); if(t && t.exp>Date.now()){ token=t.v; tokenExp=t.exp; } }catch(e){}
+const hasToken = () => !!token && tokenExp > Date.now()+30000;
+function clearToken(){ token=null; tokenExp=0; try{localStorage.removeItem(TKEY);}catch(e){} }
+
+window.gisLoaded = function(){
+  if(!configured || !window.google) return;
+  tokenClient = google.accounts.oauth2.initTokenClient({
+    client_id: CLIENT_ID, scope: SCOPE,
+    callback: r => {
+      if(r.error){ waiters.splice(0).forEach(w=>w.rej(r)); return; }
+      token=r.access_token; tokenExp=Date.now()+(Number(r.expires_in)||3600)*1000-60000;
+      try{ localStorage.setItem(TKEY, JSON.stringify({v:token,exp:tokenExp})); }catch(e){}
+      S.everLogged=true; persist();
+      waiters.splice(0).forEach(w=>w.res(token));
+    },
+    error_callback: e => waiters.splice(0).forEach(w=>w.rej(e))
+  });
+  updateStatus();
+};
+function login(){
+  return new Promise((res,rej)=>{
+    if(!tokenClient){ rej({gis:true}); return; }
+    waiters.push({res,rej});
+    tokenClient.requestAccessToken({prompt: S.everLogged ? "" : "consent"});
+  });
+}
+async function ensureLogin(){
+  if(hasToken()) return true;
+  if(!navigator.onLine){ toast("Sem internet agora. Suas alterações ficam salvas aqui."); return false; }
+  if(!tokenClient){ toast(configured ? "O login do Google ainda está carregando" : "Falta configurar o ID do cliente (veja o guia)"); return false; }
+  try{ await login(); return true; }catch(e){ toast("Login não concluído"); return false; }
+}
+
+// ---------------- Google Planilhas ----------------
+async function api(url, opt={}){
+  const r = await fetch(url, Object.assign({}, opt, {headers:{"Authorization":"Bearer "+token,"Content-Type":"application/json"}}));
+  if(r.status===401){ clearToken(); throw {auth:true}; }
+  if(!r.ok){ let m=""; try{ m=(await r.json()).error.message; }catch(e){} throw {status:r.status, msg:m}; }
+  return r.json();
+}
+const rng = (sheet,a) => `'${sheet}'!${a}`;
+function colLetter(n){ let s=""; while(n>0){ const m=(n-1)%26; s=String.fromCharCode(65+m)+s; n=Math.floor((n-1)/26); } return s; }
+function serialToISO(n){ return new Date(Date.UTC(1899,11,30)+Math.round(n)*86400000).toISOString().slice(0,10); }
+
+function normGuestStatus(v){ const s=String(v||"").toLowerCase(); if(s.startsWith("confirm")) return "Confirmado"; if(s.includes("não")||s.includes("nao")||s.includes("recus")) return "Não vai"; return "Pendente"; }
+function normQuoteStatus(v){ const s=String(v||"").toLowerCase(); if(s.includes("não")||s.includes("nao")||s.includes("reprov")) return "Não aprovado"; if(s.startsWith("aprov")) return "Aprovado"; return "Em análise"; }
+function normalize(t,o){
+  const r = {};
+  TABLES[t].cols.forEach(c => r[c] = o[c] ?? "");
+  Object.keys(o).forEach(k => { if(!(k in r)) r[k]=o[k]; });
+  r.id=String(r.id); r.atualizado=num(r.atualizado);
+  r.excluido = String(r.excluido).toLowerCase()==="sim" ? "sim" : "";
+  if(t==="guests"){ r.nome=String(r.nome); r.adultos=Math.max(0,Math.round(num(r.adultos))); r.criancas=Math.max(0,Math.round(num(r.criancas))); r.presenca=normGuestStatus(r.presenca); r.lado=String(r.lado||""); r.telefone=String(r.telefone); }
+  else { r.fornecedor=String(r.fornecedor); r.valor=num(r.valor); r.pago=num(r.pago); r.situacao=normQuoteStatus(r.situacao); r.categoria=String(r.categoria||"Outros"); }
+  return r;
+}
+function normSettings(o){
+  let d=o.data; if(typeof d==="number") d=serialToISO(d); d=String(d||"").slice(0,10);
+  return {noiva:String(o.noiva||""), noivo:String(o.noivo||""), data:/^\d{4}-\d{2}-\d{2}$/.test(d)?d:"", teto:num(o.teto), atualizado:num(o.atualizado)};
+}
+
+async function createSheet(){
+  const j = await api(API, {method:"POST", body:JSON.stringify({
+    properties:{title:"Controle do casamento", locale:"pt_BR"},
+    sheets:[{properties:{title:"Convidados"}},{properties:{title:"Orçamentos"}},{properties:{title:"Config"}}]
+  })});
+  S.sheetId=j.spreadsheetId; S.lastSync=0; persist();
+}
+async function ensureTabs(){
+  const j = await api(`${API}/${S.sheetId}?fields=sheets.properties.title`);
+  const have = (j.sheets||[]).map(s=>s.properties.title);
+  const need = ["Convidados","Orçamentos","Config"].filter(t=>!have.includes(t));
+  if(need.length) await api(`${API}/${S.sheetId}:batchUpdate`, {method:"POST", body:JSON.stringify({requests:need.map(title=>({addSheet:{properties:{title}}}))})});
+}
+
+let syncing=false, syncTimer=null, lastError="";
+function scheduleSync(ms=1500){ clearTimeout(syncTimer); syncTimer=setTimeout(sync, ms); }
+
+async function readAll(){
+  const q=[rng("Convidados","A1:Z"),rng("Orçamentos","A1:Z"),rng("Config","A1:B30")].map(r=>"ranges="+encodeURIComponent(r)).join("&");
+  return api(`${API}/${S.sheetId}/values:batchGet?${q}&valueRenderOption=UNFORMATTED_VALUE`);
+}
+
+async function sync(){
+  if(syncing || !S.sheetId || !hasToken() || !navigator.onLine){ updateStatus(); return; }
+  syncing=true; lastError=""; updateStatus();
+  const ops = S.pending.slice();
+  try{
+    let got;
+    try{ got = await readAll(); }
+    catch(e){ if(e && e.status===400){ await ensureTabs(); got = await readAll(); } else throw e; }
+    const vr = got.valueRanges || [];
+    const updates=[], appends={}, remote={};
+
+    ["guests","quotes"].forEach((t,i)=>{
+      const def=TABLES[t], vals=(vr[i] && vr[i].values) || [];
+      const headers=(vals[0]||[]).map(h=>String(h).trim().toLowerCase());
+      let changed=!vals.length;
+      def.cols.forEach(c=>{ if(!headers.includes(c)){ headers.push(c); changed=true; } });
+      if(changed) updates.push({range:rng(def.sheet,"A1"), values:[headers]});
+      const idCol = colLetter(headers.indexOf("id")+1);
+      const rows=[];
+      for(let k=1;k<vals.length;k++){
+        const o={}; headers.forEach((h,j)=>o[h]=vals[k][j] ?? "");
+        if(!o.id){
+          if(!String(o[def.key]||"").trim()) continue;      // linha vazia
+          o.id=newId(); updates.push({range:rng(def.sheet, idCol+(k+1)), values:[[o.id]]}); // linha digitada direto na planilha
+        }
+        const r=normalize(t,o); r._row=k+1; rows.push(r);
+      }
+      remote[t]={headers, rows};
+    });
+
+    ops.forEach(op=>{
+      if(op.table==="config") return;
+      const R=remote[op.table], def=TABLES[op.table];
+      const ex=R.rows.find(r=>r.id===op.row.id);
+      if(ex && ex.atualizado > op.row.atualizado) return;   // alguém alterou depois; vale a mais recente
+      const line=R.headers.map(h => (h in op.row) ? op.row[h] : (ex ? (ex[h] ?? "") : ""));
+      if(ex){ updates.push({range:rng(def.sheet,`A${ex._row}:${colLetter(R.headers.length)}${ex._row}`), values:[line]}); Object.assign(ex, op.row); }
+      else { (appends[op.table]=appends[op.table]||[]).push(line); R.rows.push(Object.assign({}, op.row)); }
+    });
+
+    const cv=(vr[2] && vr[2].values) || [], rc={};
+    cv.forEach(r=>{ if(r[0]!==undefined && r[0]!=="") rc[String(r[0]).trim().toLowerCase()] = r[1] ?? ""; });
+    let settings=normSettings(rc);
+    const cop=ops.filter(o=>o.table==="config").pop();
+    let writeConfig = !cv.length;
+    if(cop && cop.row.atualizado >= settings.atualizado){ settings=Object.assign({}, cop.row); writeConfig=true; }
+    if(writeConfig)
+      updates.push({range:rng("Config","A1:B"+CONFIG_KEYS.length), values:CONFIG_KEYS.map(k=>[k, settings[k] ?? ""])});
+
+    if(updates.length) await api(`${API}/${S.sheetId}/values:batchUpdate`, {method:"POST", body:JSON.stringify({valueInputOption:"RAW", data:updates})});
+    for(const t in appends){
+      await api(`${API}/${S.sheetId}/values/${encodeURIComponent(rng(TABLES[t].sheet,"A1"))}:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS`,
+        {method:"POST", body:JSON.stringify({values:appends[t]})});
+    }
+
+    S.pending = S.pending.filter(p=>!ops.includes(p));
+    S.guests = remote.guests.rows.map(r=>{ const c=Object.assign({},r); delete c._row; return c; });
+    S.quotes = remote.quotes.rows.map(r=>{ const c=Object.assign({},r); delete c._row; return c; });
+    S.settings = settings;
+    S.pending.forEach(applyLocal);
+    S.lastSync = Date.now();
+    persist(); renderAll();
+  }catch(e){
+    if(e && e.auth) lastError="auth";
+    else if(e instanceof TypeError) lastError="offline";
+    else if(e && (e.status===404)) lastError="notfound";
+    else if(e && (e.status===403)) lastError="forbidden";
+    else lastError="erro";
+  }finally{
+    syncing=false; updateStatus();
+    if(!lastError && S.pending.length) scheduleSync(800);
+  }
+}
+
+// ---------------- Alterações locais ----------------
+function applyLocal(op){
+  if(op.table==="config"){ S.settings=Object.assign({}, op.row); return; }
+  const list=S[op.table], i=list.findIndex(r=>r.id===op.row.id), copy=Object.assign({}, op.row);
+  if(i>=0) list[i]=copy; else list.push(copy);
+}
+function change(table, row){
+  row.atualizado = Date.now();
+  const op = {table, row:JSON.parse(JSON.stringify(row))};
+  S.pending = S.pending.filter(p => !(p.table===table && (table==="config" || p.row.id===row.id)));
+  S.pending.push(op);
+  applyLocal(op); persist(); renderAll(); updateStatus(); scheduleSync();
+}
+
+// ---------------- Barra de sincronização ----------------
+function updateStatus(){
+  const bar=$("#syncBar"), txt=$("#syncTxt"), btn=$("#syncBtn");
+  const n=S.pending.length, pend = n ? `${n} alteraç${n===1?"ão":"ões"} guardada${n===1?"":"s"} neste aparelho` : "";
+  let cls="wait", t="", b="";
+  if(!configured){ t="Modo local: os dados ficam só neste aparelho até configurar o Google (veja o guia)."; }
+  else if(!S.sheetId){ t="Conecte uma planilha do Google Drive para sincronizar."; b="Conectar"; }
+  else if(syncing){ t="Sincronizando…"; }
+  else if(!navigator.onLine || lastError==="offline"){ cls="wait"; t = "Sem internet. " + (pend ? pend+"." : "Tudo salvo neste aparelho."); }
+  else if(lastError==="notfound" || lastError==="forbidden"){ cls="no"; t="Sem acesso à planilha. Peça para ser adicionado como editor dela."; b="Tentar de novo"; }
+  else if(lastError==="erro"){ cls="no"; t="Não foi possível sincronizar agora."; b="Tentar de novo"; }
+  else if(!hasToken() || lastError==="auth"){ t = "Entre com Google para sincronizar." + (pend ? " "+pend+"." : ""); b="Entrar"; }
+  else if(n){ t=pend+", enviando…"; b="Sincronizar"; }
+  else if(S.lastSync){ cls="ok"; t="Sincronizado às "+new Date(S.lastSync).toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"}); b="Atualizar"; }
+  else { t="Pronto para sincronizar."; b="Sincronizar"; }
+  bar.className="sync "+cls; txt.textContent=t; btn.textContent=b; btn.hidden=!b; btn.disabled=syncing;
+}
+$("#syncBtn").onclick = async () => {
+  if(!S.sheetId){ openConnect(); return; }
+  if(!(await ensureLogin())) return;
+  lastError=""; sync();
+};
+
+// ---------------- Conectar planilha ----------------
+function sheetIdFrom(v){ v=String(v||"").trim(); const m=v.match(/\/d\/([a-zA-Z0-9_-]{20,})/); if(m) return m[1]; return /^[a-zA-Z0-9_-]{20,}$/.test(v) ? v : ""; }
+function openConnect(){
+  $("#sheet").innerHTML = `
+    <h2>Conectar ao Google Drive</h2>
+    <p class="help">Os dados ficam numa Planilha Google no seu Drive. Quem for editar junto precisa ter acesso de editor a ela.</p>
+    <button class="btn block" id="cNew">Criar planilha nova no meu Drive</button>
+    <h3>Ou usar uma planilha que já existe</h3>
+    <div class="field"><label for="cLink">Link da planilha</label><input id="cLink" placeholder="https://docs.google.com/spreadsheets/d/…"></div>
+    <button class="btn ghost block" id="cUse">Usar esta planilha</button>
+    <div class="actions"><span class="spacer"></span><button class="btn ghost" id="cancel">Fechar</button></div>`;
+  $("#cancel").onclick = () => $("#dlg").close();
+  $("#cNew").onclick = async () => {
+    if(!(await ensureLogin())) return;
+    try{ $("#cNew").disabled=true; await createSheet(); $("#dlg").close(); toast("Planilha criada no seu Drive"); lastError=""; sync(); }
+    catch(e){ $("#cNew").disabled=false; toast("Não foi possível criar a planilha"); }
+  };
+  $("#cUse").onclick = async () => {
+    const id=sheetIdFrom($("#cLink").value); if(!id){ toast("Cole o link completo da planilha"); return; }
+    if(!(await ensureLogin())) return;
+    S.sheetId=id; S.lastSync=0; persist(); $("#dlg").close(); lastError=""; sync();
+  };
+  $("#dlg").showModal();
+}
+
+// ---------------- Abas ----------------
+document.querySelectorAll("nav.tabs button").forEach(b=>b.addEventListener("click",()=>{
+  document.querySelectorAll("nav.tabs button").forEach(x=>x.setAttribute("aria-selected", x===b));
+  ["resumo","convidados","orcamentos"].forEach(t=>$("#tab-"+t).hidden = t!==b.dataset.tab);
+}));
+
+const guests = () => S.guests.filter(g=>g.excluido!=="sim");
+const quotes = () => S.quotes.filter(q=>q.excluido!=="sim");
+
+function renderHeader(){
+  const st=S.settings, b=st.noiva||"Noiva", g=st.noivo||"Noivo";
+  $("#names").innerHTML = esc(b)+' <span class="amp">&amp;</span> '+esc(g);
+  if(st.data){
+    const d=new Date(st.data+"T12:00:00");
+    $("#dateLabel").textContent = d.toLocaleDateString("pt-BR",{weekday:"long",day:"numeric",month:"long",year:"numeric"});
+    const today=new Date(); today.setHours(12,0,0,0);
+    const days=Math.round((d-today)/86400000), c=$("#countdown"); c.hidden=false;
+    c.textContent = days>1 ? `Faltam ${days} dias` : days===1 ? "É amanhã!" : days===0 ? "É hoje!" : "Casados!";
+  } else { $("#dateLabel").textContent="Defina a data em Ajustes"; $("#countdown").hidden=true; }
+  document.title = `${b} & ${g}`;
+}
+
+function renderSummary(){
+  const G=guests(), Q=quotes();
+  const ppl = x => (Number(x.adultos)||0)+(Number(x.criancas)||0);
+  const total=G.reduce((s,x)=>s+ppl(x),0);
+  const conf=G.filter(x=>x.presenca==="Confirmado").reduce((s,x)=>s+ppl(x),0);
+  const pend=G.filter(x=>x.presenca==="Pendente").reduce((s,x)=>s+ppl(x),0);
+  const ap=Q.filter(q=>q.situacao==="Aprovado");
+  const spent=ap.reduce((s,q)=>s+num(q.valor),0), paid=ap.reduce((s,q)=>s+num(q.pago),0);
+  const analysing=Q.filter(q=>q.situacao==="Em análise").length;
+  const cap=num(S.settings.teto), pct=cap>0?Math.min(100,spent/cap*100):0;
+  const byCat={}; ap.forEach(q=>{ const c=q.categoria||"Outros"; byCat[c]=(byCat[c]||0)+num(q.valor); });
+  const cats=Object.entries(byCat).sort((a,b)=>b[1]-a[1]);
+  $("#tab-resumo").innerHTML = `
+    <div class="stats">
+      <div class="stat"><h3>Convidados</h3><div class="big">${total}</div><div class="sub">${G.length} convite${G.length===1?"":"s"}</div></div>
+      <div class="stat"><h3>Confirmados</h3><div class="big">${conf}</div><div class="sub">${pend} aguardando resposta</div></div>
+      <div class="stat wide">
+        <h3>Gastos aprovados</h3>
+        <div class="big">${brl(spent)}</div>
+        ${cap>0 ? `<div class="bar ${spent>cap?"over":""}"><span style="width:${pct}%"></span></div>
+          <div class="sub">${spent>cap ? `Passou ${brl(spent-cap)} do teto de ${brl(cap)}` : `Restam ${brl(cap-spent)} do teto de ${brl(cap)}`}</div>`
+        : `<div class="sub">Defina um teto de gastos em Ajustes para acompanhar o saldo.</div>`}
+        <div class="sub">Já pago: ${brl(paid)}. Falta pagar: ${brl(spent-paid)}</div>
+        <div class="sub">${analysing} orçamento${analysing===1?"":"s"} em análise</div>
+        ${cats.length ? `<ul class="cat-list">${cats.map(([c,v])=>`<li><span>${esc(c)}</span><strong>${brl(v)}</strong></li>`).join("")}</ul>` : ""}
+      </div>
+    </div>`;
+}
+
+let gFilter="todos", qFilter="todos";
+function renderChips(el, list, current, onPick){
+  const opts=[["todos","Todos"], ...list.map(([l])=>[l,l])];
+  el.innerHTML = opts.map(([k,l])=>`<button class="chip" aria-pressed="${k===current}" data-k="${esc(k)}">${esc(l)}</button>`).join("");
+  el.querySelectorAll("button").forEach(b=>b.onclick=()=>onPick(b.dataset.k));
+}
+const pillCls = (list,v) => (list.find(x=>x[0]===v)||list[0])[1];
+
+function renderGuests(){
+  renderChips($("#gChips"), GUEST_STATUS, gFilter, k=>{gFilter=k; renderGuests();});
+  const q=$("#gSearch").value.trim().toLowerCase(), all=guests();
+  const list=all.filter(x=>(gFilter==="todos"||x.presenca===gFilter) && (!q || x.nome.toLowerCase().includes(q) || String(x.obs).toLowerCase().includes(q)))
+    .sort((a,b)=>a.nome.localeCompare(b.nome,"pt-BR"));
+  const el=$("#gList");
+  if(!all.length){ el.innerHTML='<div class="empty"><p>Nenhum convidado ainda.</p><button class="btn" id="gFirst">Adicionar o primeiro</button></div>'; $("#gFirst").onclick=()=>openGuest(); return; }
+  if(!list.length){ el.innerHTML='<div class="empty"><p>Nenhum convidado com esse filtro.</p></div>'; return; }
+  el.innerHTML = list.map(x=>{
+    const p=(Number(x.adultos)||0)+(Number(x.criancas)||0);
+    const meta=[x.lado, `${p} pessoa${p===1?"":"s"}`, x.telefone].filter(Boolean).join(", ");
+    return `<button class="row" data-id="${esc(x.id)}"><div class="main"><div class="title">${esc(x.nome)}</div><div class="meta">${esc(meta)}</div></div><span class="pill ${pillCls(GUEST_STATUS,x.presenca)}">${esc(x.presenca)}</span></button>`;
+  }).join("");
+  el.querySelectorAll(".row").forEach(r=>r.onclick=()=>openGuest(S.guests.find(g=>g.id===r.dataset.id)));
+}
+
+function renderQuotes(){
+  renderChips($("#qChips"), QUOTE_STATUS, qFilter, k=>{qFilter=k; renderQuotes();});
+  const q=$("#qSearch").value.trim().toLowerCase(), all=quotes();
+  const list=all.filter(x=>(qFilter==="todos"||x.situacao===qFilter) && (!q || x.fornecedor.toLowerCase().includes(q) || x.categoria.toLowerCase().includes(q)))
+    .sort((a,b)=>a.categoria.localeCompare(b.categoria,"pt-BR") || a.fornecedor.localeCompare(b.fornecedor,"pt-BR"));
+  const el=$("#qList");
+  if(!all.length){ el.innerHTML='<div class="empty"><p>Nenhum orçamento ainda.</p><button class="btn" id="qFirst">Adicionar o primeiro</button></div>'; $("#qFirst").onclick=()=>openQuote(); return; }
+  if(!list.length){ el.innerHTML='<div class="empty"><p>Nenhum orçamento com esse filtro.</p></div>'; return; }
+  el.innerHTML = list.map(x=>{
+    const meta=[x.categoria, x.situacao==="Aprovado" && num(x.pago)>0 ? `pago ${brl(x.pago)}` : ""].filter(Boolean).join(", ");
+    return `<button class="row" data-id="${esc(x.id)}"><div class="main"><div class="title">${esc(x.fornecedor)}</div><div class="meta">${esc(meta)}</div></div><div style="text-align:right"><div class="val">${brl(x.valor)}</div><span class="pill ${pillCls(QUOTE_STATUS,x.situacao)}">${esc(x.situacao)}</span></div></button>`;
+  }).join("");
+  el.querySelectorAll(".row").forEach(r=>r.onclick=()=>openQuote(S.quotes.find(g=>g.id===r.dataset.id)));
+}
+
+function segHTML(list, cur){ return `<div class="seg">${list.map(([l,c])=>`<button type="button" class="${c}" data-v="${esc(l)}" aria-pressed="${l===cur}">${esc(l)}</button>`).join("")}</div>`; }
+function bindSeg(){ document.querySelectorAll("#sheet .seg").forEach(s=>s.querySelectorAll("button").forEach(b=>b.onclick=()=>s.querySelectorAll("button").forEach(x=>x.setAttribute("aria-pressed", x===b)))); }
+const segVal = () => { const b=$('#sheet .seg button[aria-pressed="true"]'); return b ? b.dataset.v : ""; };
+const moneyField = v => v ? String(v).replace(".",",") : "";
+
+function openGuest(x){
+  const isNew=!x; x = x ? Object.assign({},x) : {id:newId(),nome:"",lado:"Noiva",adultos:1,criancas:0,presenca:"Pendente",telefone:"",obs:"",excluido:""};
+  $("#sheet").innerHTML = `
+    <h2>${isNew?"Novo convidado":"Convidado"}</h2>
+    <div class="field"><label for="f_nome">Nome ou família</label><input id="f_nome" value="${esc(x.nome)}"></div>
+    <div class="field"><label for="f_lado">Lado</label><select id="f_lado">${SIDES.map(s=>`<option ${s===x.lado?"selected":""}>${s}</option>`).join("")}</select></div>
+    <div class="two">
+      <div class="field"><label for="f_ad">Adultos</label><input id="f_ad" type="number" min="0" inputmode="numeric" value="${esc(x.adultos)}"></div>
+      <div class="field"><label for="f_kd">Crianças</label><input id="f_kd" type="number" min="0" inputmode="numeric" value="${esc(x.criancas)}"></div>
+    </div>
+    <div class="field"><label>Presença</label>${segHTML(GUEST_STATUS, x.presenca)}</div>
+    <div class="field"><label for="f_tel">Telefone</label><input id="f_tel" type="tel" value="${esc(x.telefone)}"></div>
+    <div class="field"><label for="f_obs">Observações</label><textarea id="f_obs">${esc(x.obs)}</textarea></div>
+    <div class="actions">
+      ${isNew?"":'<button class="btn danger" id="del">Excluir</button>'}
+      <span class="spacer"></span>
+      <button class="btn ghost" id="cancel">Cancelar</button>
+      <button class="btn" id="save">Salvar</button>
+    </div>`;
+  bindSeg();
+  $("#cancel").onclick=()=>$("#dlg").close();
+  $("#save").onclick=()=>{
+    const nome=$("#f_nome").value.trim(); if(!nome){ $("#f_nome").focus(); toast("Digite o nome do convidado"); return; }
+    Object.assign(x,{nome, lado:$("#f_lado").value, adultos:Math.max(0,parseInt($("#f_ad").value)||0), criancas:Math.max(0,parseInt($("#f_kd").value)||0),
+      presenca:segVal()||"Pendente", telefone:$("#f_tel").value.trim(), obs:$("#f_obs").value.trim()});
+    change("guests", x); $("#dlg").close(); toast(isNew?"Convidado adicionado":"Convidado salvo");
+  };
+  if(!isNew) $("#del").onclick=()=>{ if(confirm(`Excluir ${x.nome}?`)){ x.excluido="sim"; change("guests", x); $("#dlg").close(); toast("Convidado excluído"); } };
+  $("#dlg").showModal();
+}
+
+function openQuote(x){
+  const isNew=!x; x = x ? Object.assign({},x) : {id:newId(),fornecedor:"",categoria:"Local",valor:0,pago:0,situacao:"Em análise",contato:"",obs:"",excluido:""};
+  $("#sheet").innerHTML = `
+    <h2>${isNew?"Novo orçamento":"Orçamento"}</h2>
+    <div class="field"><label for="f_forn">Fornecedor</label><input id="f_forn" value="${esc(x.fornecedor)}"></div>
+    <div class="field"><label for="f_cat">Categoria</label><select id="f_cat">${[...new Set([...CATEGORIES, x.categoria])].map(s=>`<option ${s===x.categoria?"selected":""}>${esc(s)}</option>`).join("")}</select></div>
+    <div class="two">
+      <div class="field"><label for="f_val">Valor (R$)</label><input id="f_val" inputmode="decimal" placeholder="0,00" value="${esc(moneyField(x.valor))}"></div>
+      <div class="field"><label for="f_pago">Já pago (R$)</label><input id="f_pago" inputmode="decimal" placeholder="0,00" value="${esc(moneyField(x.pago))}"></div>
+    </div>
+    <div class="field"><label>Situação</label>${segHTML(QUOTE_STATUS, x.situacao)}</div>
+    <div class="field"><label for="f_cont">Contato</label><input id="f_cont" value="${esc(x.contato)}"></div>
+    <div class="field"><label for="f_obs">Observações</label><textarea id="f_obs">${esc(x.obs)}</textarea></div>
+    <div class="actions">
+      ${isNew?"":'<button class="btn danger" id="del">Excluir</button>'}
+      <span class="spacer"></span>
+      <button class="btn ghost" id="cancel">Cancelar</button>
+      <button class="btn" id="save">Salvar</button>
+    </div>`;
+  bindSeg();
+  $("#cancel").onclick=()=>$("#dlg").close();
+  $("#save").onclick=()=>{
+    const f=$("#f_forn").value.trim(); if(!f){ $("#f_forn").focus(); toast("Digite o nome do fornecedor"); return; }
+    Object.assign(x,{fornecedor:f, categoria:$("#f_cat").value, valor:num($("#f_val").value), pago:num($("#f_pago").value),
+      situacao:segVal()||"Em análise", contato:$("#f_cont").value.trim(), obs:$("#f_obs").value.trim()});
+    change("quotes", x); $("#dlg").close(); toast(isNew?"Orçamento adicionado":"Orçamento salvo");
+  };
+  if(!isNew) $("#del").onclick=()=>{ if(confirm(`Excluir o orçamento de ${x.fornecedor}?`)){ x.excluido="sim"; change("quotes", x); $("#dlg").close(); toast("Orçamento excluído"); } };
+  $("#dlg").showModal();
+}
+
+function shareLink(){ return location.origin + location.pathname + "?planilha=" + encodeURIComponent(S.sheetId); }
+function openSettings(){
+  const st=S.settings;
+  $("#sheet").innerHTML = `
+    <h2>Ajustes</h2>
+    <div class="two">
+      <div class="field"><label for="s_b">Noiva</label><input id="s_b" value="${esc(st.noiva)}"></div>
+      <div class="field"><label for="s_g">Noivo</label><input id="s_g" value="${esc(st.noivo)}"></div>
+    </div>
+    <div class="field"><label for="s_d">Data</label><input id="s_d" type="date" value="${esc(st.data)}"></div>
+    <div class="field"><label for="s_c">Teto de gastos (R$)</label><input id="s_c" inputmode="decimal" placeholder="0,00" value="${esc(moneyField(st.teto))}"></div>
+    <button class="btn block" id="sSave">Salvar</button>
+    <h3>Planilha no Google Drive</h3>
+    ${S.sheetId ? `
+      <p class="help">Para outra pessoa editar junto: compartilhe a planilha com ela como Editor no Google Drive e envie o link do app abaixo.</p>
+      <a class="btn ghost block" style="display:block;text-align:center;text-decoration:none" href="https://docs.google.com/spreadsheets/d/${esc(S.sheetId)}/edit" target="_blank" rel="noopener">Abrir planilha</a>
+      <button class="btn ghost block" id="sCopy">Copiar link do app para compartilhar</button>
+      <button class="btn ghost block" id="sChange">Trocar de planilha</button>`
+    : `<p class="help">Nenhuma planilha conectada. Os dados estão só neste aparelho.</p><button class="btn ghost block" id="sConnect">Conectar ao Google Drive</button>`}
+    <div class="actions"><span class="spacer"></span><button class="btn ghost" id="cancel">Fechar</button></div>`;
+  $("#cancel").onclick=()=>$("#dlg").close();
+  $("#sSave").onclick=()=>{
+    change("config", {noiva:$("#s_b").value.trim(), noivo:$("#s_g").value.trim(), data:$("#s_d").value, teto:num($("#s_c").value)});
+    $("#dlg").close(); toast("Ajustes salvos");
+  };
+  if($("#sCopy")) $("#sCopy").onclick=async()=>{
+    try{ await navigator.clipboard.writeText(shareLink()); toast("Link copiado"); }
+    catch(e){ window.prompt("Copie o link:", shareLink()); }
+  };
+  if($("#sChange")) $("#sChange").onclick=()=>{ $("#dlg").close(); openConnect(); };
+  if($("#sConnect")) $("#sConnect").onclick=()=>{ $("#dlg").close(); openConnect(); };
+  $("#dlg").showModal();
+}
+$("#openSettings").onclick = openSettings;
+$("#addGuest").onclick = () => openGuest();
+$("#addQuote").onclick = () => openQuote();
+$("#gSearch").addEventListener("input", renderGuests);
+$("#qSearch").addEventListener("input", renderQuotes);
+
+function renderAll(){ renderHeader(); renderSummary(); renderGuests(); renderQuotes(); }
+
+// ---------------- Instalar e offline ----------------
+let installEvt=null;
+window.addEventListener("beforeinstallprompt", e => { e.preventDefault(); installEvt=e; $("#installBtn").hidden=false; });
+$("#installBtn").onclick = async () => { if(!installEvt) return; installEvt.prompt(); await installEvt.userChoice; installEvt=null; $("#installBtn").hidden=true; };
+window.addEventListener("appinstalled", () => { $("#installBtn").hidden=true; toast("App instalado"); });
+if("serviceWorker" in navigator) navigator.serviceWorker.register("./sw.js").catch(()=>{});
+
+window.addEventListener("online", () => { lastError=""; updateStatus(); sync(); });
+window.addEventListener("offline", updateStatus);
+document.addEventListener("visibilitychange", () => { if(document.visibilityState==="visible" && Date.now()-S.lastSync>30000) sync(); });
+
+renderAll(); updateStatus();
+if(hasToken()) sync();
+})();
+</script>
+<script src="https://accounts.google.com/gsi/client" async defer onload="window.gisLoaded && window.gisLoaded()"></script>
+</body>
+</html>
